@@ -21,18 +21,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   init() async {
     Map<String, dynamic> result = await getVersionInfo();
-    // print('result = ${result}');
     versionNumber = result['versionName'].toString();
     versionCode = result['versionCode'].toString();
     setState(() {
       if(versionNumber.isNotEmpty && versionCode.isNotEmpty){
         Future.delayed(
-          Duration(seconds: 3),
-              () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => UserListScreen(),
-              )
+          const Duration(seconds: 3),
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserListScreen(),)
           ),
         );
       }
@@ -52,7 +49,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Your splash screen UI with version information
     return Scaffold(
       body: Center(
         child: Column(

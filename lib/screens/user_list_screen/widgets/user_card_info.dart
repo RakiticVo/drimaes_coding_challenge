@@ -16,7 +16,7 @@ class UserCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            height: isListView ? 200 : 120, // Adjust the height as needed
+            height: isListView ? 200 : 120,
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(12.0))
             ),
@@ -34,10 +34,10 @@ class UserCard extends StatelessWidget {
           ),
          const SizedBox(height: 16.0,),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Text(
-              'Name: $name',
-              style: const TextStyle(fontSize: 12),
+              name,
+              style: const TextStyle(fontSize: 14),
               softWrap: true,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

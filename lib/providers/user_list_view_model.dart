@@ -54,12 +54,10 @@ class UserListViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Clear existing data
       _userPages.clear();
       _userDataList.clear();
       _currentPage = 1;
 
-      // Load user pages from SQLite
       await getUserPagesFromDatabase();
       _isLoading = false;
       notifyListeners();
@@ -67,12 +65,7 @@ class UserListViewModel extends ChangeNotifier {
   }
 
   void updateUserDataList() {
-    print('_currentPage = $_currentPage');
-    print('_userPages.length = ${_userPages.length}');
     if (_userPages.isNotEmpty && _currentPage <= _userPages.length) {
-      // for(UserDataModel userModel in _userPages[_currentPage - 1].data){
-      //   log('userModel =${userModel.toJson().toString()}');
-      // }
       _userDataList.addAll(_userPages[_currentPage - 1].data);
       notifyListeners();
     }
@@ -83,7 +76,6 @@ class UserListViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Fetch user pages from the API or any source
       final newUserPages = await _databaseHelper.getUserPages();
 
       if(newUserPages != null){
@@ -100,14 +92,13 @@ class UserListViewModel extends ChangeNotifier {
 
   Future<void> loadMore() async {
     if (_isLoadingMore) {
-      return; // Avoid loading more if a request is already in progress
+      return;
     }
 
     try {
       _isLoadingMore = true;
       notifyListeners();
 
-      // Implement your logic to load more data, for example:
       final nextPageNumber = _currentPage + 1;
       final newPage = await _databaseHelper.getUserPage(nextPageNumber);
 
@@ -115,15 +106,11 @@ class UserListViewModel extends ChangeNotifier {
         _userPages.add(newPage);
         _currentPage = nextPageNumber; // Update _currentPage
         updateUserDataList();
-        // for(UserPageModel userModel in _userPages){
-        //   log('page = ${userModel.toJson().toString()}');
-        // }
       } else {
-        print("Failed to load more data."); // Log a message if loading fails
+        print("Failed to load more data.");
       }
     } catch (e) {
       print("Error loading more: $e");
-      // Handle the error (e.g., show an error message to the user)
     } finally {
       _isLoadingMore = false;
       notifyListeners();
@@ -133,9 +120,6 @@ class UserListViewModel extends ChangeNotifier {
   Future<void> getUserPagesFromDatabase() async {
     try {
       final userPages = await _databaseHelper.getUserPages();
-      // for(UserPageModel userModel in userPages){
-      //   log('user page: ${userModel.toJson().toString()}');
-      // }
       if(userPages != null){
         _userPages = userPages;
         updateUserDataList();
@@ -146,18 +130,8 @@ class UserListViewModel extends ChangeNotifier {
     }
   }
 
-  void addUserPages(List<UserPageModel> newUserPages) {
-    _userPages = newUserPages;
-    notifyListeners();
-  }
-
   void addAllUserPages(List<UserPageModel> userPages) {
     _userPages.addAll(userPages);
-    notifyListeners();
-  }
-
-  void updateUserPages(List<UserPageModel> newUserPages) {
-    _userPages = newUserPages;
     notifyListeners();
   }
 }

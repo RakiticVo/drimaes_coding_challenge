@@ -187,9 +187,6 @@ class DatabaseHelper {
         userData.add(UserDataModel.fromJson(data.first));
 
       }
-      // for(UserDataModel userModel in userData){
-      //   log('user data: ${userModel}');
-      // }
 
       UserPageModel userPage = UserPageModel(
           page: (result[i]['page'] as int?) ?? 0,

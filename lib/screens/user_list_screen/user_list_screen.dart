@@ -4,7 +4,6 @@ import 'package:drimaes_coding_challenge/notification/notification_services.dart
 import 'package:drimaes_coding_challenge/providers/user_list_view_model.dart';
 import 'package:drimaes_coding_challenge/screens/user_list_screen/widgets/user_card_info.dart';
 import 'package:drimaes_coding_challenge/services/api_services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:number_paginator/number_paginator.dart';
 import 'package:provider/provider.dart';
@@ -45,59 +44,16 @@ class _UserListScreenState extends State<UserListScreen> {
         await databaseHelper.saveUserPages(userListViewModel.userPages);
 
       } catch (e) {
-        print("Error fetching users: $e");
         rethrow;
       }
     } else {
-      // No internet connection
       await notificationService.showNoInternetNotification();
 
-      // Load user pages from SQLite
       await userListViewModel.getUserPagesFromDatabase();
     }
 
     setState(() {
-      // for(UserPageModel userModel in userPages){
-      //   log(userModel.toJson().toString());
-      // }
       isLoading = false;
-    });
-  }
-
-  Future<void> refresh() async {
-    final apiService = Provider.of<ApiService>(context, listen: false);
-    final userListViewModel = Provider.of<UserListViewModel>(context, listen: false);
-    final notificationService = NotificationService();
-
-    if (await notificationService.isConnectedToInternet()) {
-      List<UserPageModel> userPagesRefresh = [];
-      try {
-        final userPage = await apiService.getUsers(1);
-        userPagesRefresh.addAll([userPage]);
-
-        if (!listEquals(userListViewModel.userPages, userPagesRefresh)) {
-          userListViewModel.addAllUserPages(userPagesRefresh);
-          userListViewModel.updateUserDataList();
-
-          // Reset the NumberPaginator
-          controllerGridView = NumberPaginatorController();
-          controllerListView = NumberPaginatorController();
-
-          final DatabaseHelper databaseHelper = DatabaseHelper();
-          await databaseHelper.saveUserPages(userPagesRefresh);
-        }
-      } catch (e) {
-        print("Error refreshing users: $e");
-      }
-    } else {
-      // No internet connection
-      await notificationService.showNoInternetNotification();
-
-      // Load user pages from SQLite
-      await userListViewModel.getUserPagesFromDatabase();
-    }
-
-    setState(() {
     });
   }
 
@@ -130,10 +86,8 @@ class _UserListScreenState extends State<UserListScreen> {
 
     final controller = ScrollController();
 
-    // Add a listener to the scroll controller
     controller.addListener(() {
       if (controller.position.pixels == controller.position.maxScrollExtent) {
-        print("Reached the end of the list. Loading more...");
         userListViewModel.loadMore();
       }
     });
@@ -142,7 +96,7 @@ class _UserListScreenState extends State<UserListScreen> {
       onRefresh: () async {
         await userListViewModel.refresh(context);
       },
-      child: Container(
+      child: SizedBox(
         height: 600.0,
         child: Column(
           children: [
@@ -169,8 +123,8 @@ class _UserListScreenState extends State<UserListScreen> {
               ),
             ),
             userListViewModel.isLoadingMore// Display loading indicator when loading more
-            ? Padding(
-              padding: const EdgeInsets.only(top: 8.0),
+            ? const Padding(
+              padding: EdgeInsets.only(top: 8.0),
               child: Center(
                 child: CircularProgressIndicator(),
               ),
@@ -188,10 +142,8 @@ class _UserListScreenState extends State<UserListScreen> {
 
     final controller = ScrollController();
 
-    // Add a listener to the scroll controller
     controller.addListener(() {
       if (controller.position.pixels == controller.position.maxScrollExtent) {
-        print("Reached the end of the list. Loading more...");
         userListViewModel.loadMore();
       }
     });
@@ -200,7 +152,7 @@ class _UserListScreenState extends State<UserListScreen> {
       onRefresh: () async {
         await userListViewModel.refresh(context);
       },
-      child: Container(
+      child: SizedBox(
         height: 600.0,
         child: Column(
           children: [
@@ -222,8 +174,8 @@ class _UserListScreenState extends State<UserListScreen> {
               ),
             ),
             userListViewModel.isLoadingMore// Display loading indicator when loading more
-            ? Padding(
-              padding: const EdgeInsets.only(top: 8.0),
+            ? const Padding(
+              padding: EdgeInsets.only(top: 8.0),
               child: Center(
                 child: CircularProgressIndicator(),
               ),
