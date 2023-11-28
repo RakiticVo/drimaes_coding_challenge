@@ -23,7 +23,7 @@ class DatabaseHelper {
   Future<Database> initDatabase() async {
     final documentsDirectory = await getDatabasesPath();
     final path = join(documentsDirectory, 'app_database.db');
-    return await openDatabase(path, version: 1, onCreate: _createDatabase);
+    return await openDatabase(path, version: 1, onCreate: _createDatabase, readOnly: false);
   }
 
   Future<UserPageModel?> getUserPage(int pageNumber) async {
@@ -32,16 +32,38 @@ class DatabaseHelper {
         await initDatabase();
       }
 
-      // Implement your logic to fetch a specific page from the database
-      // For example:
-      final data = await _database?.query(
+      final userPageData = await _database?.query(
         'user_pages',
         where: 'page = ?',
         whereArgs: [pageNumber],
       );
 
-      if (data != null && data.isNotEmpty) {
-        return UserPageModel.fromJson(data.first);
+      if (userPageData != null && userPageData.isNotEmpty) {
+        final userPage = userPageData.first;
+        List<UserDataModel> userData = [];
+        for(int i = 0; i < 6; i++){
+          List<Map<String, Object?>>? data = await _database?.query(
+            'user_data',
+            where: 'id = ?',
+            whereArgs: [(pageNumber - 1) * 6 + i],
+          );
+          if(data != null){
+            userData.add(UserDataModel.fromJson(data.first));
+          }
+        }
+
+        UserPageModel userPageModel = UserPageModel(
+          page: userPage['page'] as int,
+          perPage: userPage['per_page'] as int,
+          total: userPage['total'] as int,
+          totalPages: userPage['total_pages'] as int,
+          data: userData,
+          support: UserSupportModel(
+            url: "https://reqres.in/#support-heading",
+            text: "To keep ReqRes free, contributions towards server costs are appreciated!",
+          )
+        );
+        return userPageModel;
       } else {
         return null;
       }
@@ -143,47 +165,51 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<UserPageModel>> getUserPages() async {
+  Future<List<UserPageModel>?> getUserPages() async {
     final db = await database;
+
     final result = await db.query('user_pages');
 
     List<UserPageModel> userPages = [];
-    for (var row in result) {
-      List<UserDataModel> userData = await db.query('user_data', where: 'id = ${row['page']}').then(
-            (List<Map<String, dynamic>> maps) {
-          return List.generate(maps.length, (i) {
-            return UserDataModel(
-              id: maps[i]['id'],
-              email: maps[i]['email'],
-              firstName: maps[i]['first_name'],
-              lastName: maps[i]['last_name'],
-              avatar: maps[i]['avatar'],
-            );
-          });
-        },
-      );
+    // for(Map<String, Object?> userModel in result){
+    //   log('user page: $userModel');
+    // }
+    for (int i = 0; i < result.length; i++) {
+      List<UserDataModel> userData = [];
+      print('result.length = ${result.length}');
+      for(int j = 1; j <= 6; j++){
+        List<Map<String, Object?>>? data = await db.query(
+          'user_data',
+          where: 'id = ?',
+          whereArgs: [(i) * 6 + j],
+        );
+        print(UserDataModel.fromJson(data.first));
+        userData.add(UserDataModel.fromJson(data.first));
 
-      UserSupportModel userSupport = await db.query('user_support', where: 'url = "${row['page']}"').then(
-            (List<Map<String, dynamic>> maps) {
-          return UserSupportModel(
-            url: maps[0]['url'],
-            text: maps[0]['text'],
-          );
-        },
-      );
+      }
+      // for(UserDataModel userModel in userData){
+      //   log('user data: ${userModel}');
+      // }
 
       UserPageModel userPage = UserPageModel(
-        page: (row['page'] as int?) ?? 0,
-        perPage: (row['per_page'] as int?) ?? 0,
-        total: (row['total'] as int?) ?? 0,
-        totalPages: (row['total_pages'] as int?) ?? 0,
-        data: userData,
-        support: userSupport,
+          page: (result[i]['page'] as int?) ?? 0,
+          perPage: (result[i]['page'] as int?) ?? 0,
+          total: (result[i]['page'] as int?) ?? 0,
+          totalPages: (result[i]['page'] as int?) ?? 0,
+          data: userData,
+          support: UserSupportModel(
+            url: "https://reqres.in/#support-heading",
+            text: "To keep ReqRes free, contributions towards server costs are appreciated!",
+          )
       );
 
       userPages.add(userPage);
     }
-
     return userPages;
+  }
+
+  Future<void> closeDatabase() async {
+    final db = await database;
+    await db.close();
   }
 }

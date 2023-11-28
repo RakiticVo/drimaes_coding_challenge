@@ -23,7 +23,6 @@ class _UserListScreenState extends State<UserListScreen> {
 
   NumberPaginatorController controllerGridView = NumberPaginatorController();
   NumberPaginatorController controllerListView = NumberPaginatorController();
-  int _currentPage = 0;
 
   @override
   void initState() {
@@ -38,10 +37,9 @@ class _UserListScreenState extends State<UserListScreen> {
 
     if (await notificationService.isConnectedToInternet()) {
       try {
-        for (int i = 1; i <= 2; i++) {
-          final userPage = await apiService.getUsers(i);
-          userListViewModel.addAllUserPages([userPage]);
-        }
+        final userPage = await apiService.getUsers(1);
+        userListViewModel.addAllUserPages([userPage]);
+        userListViewModel.updateUserDataList();
 
         final DatabaseHelper databaseHelper = DatabaseHelper();
         await databaseHelper.saveUserPages(userListViewModel.userPages);
@@ -74,13 +72,12 @@ class _UserListScreenState extends State<UserListScreen> {
     if (await notificationService.isConnectedToInternet()) {
       List<UserPageModel> userPagesRefresh = [];
       try {
-        for (int i = 1; i <= 2; i++) {
-          final userPage = await apiService.getUsers(i);
-          userPagesRefresh.add(userPage);
-        }
+        final userPage = await apiService.getUsers(1);
+        userPagesRefresh.addAll([userPage]);
 
         if (!listEquals(userListViewModel.userPages, userPagesRefresh)) {
           userListViewModel.addAllUserPages(userPagesRefresh);
+          userListViewModel.updateUserDataList();
 
           // Reset the NumberPaginator
           controllerGridView = NumberPaginatorController();
@@ -117,21 +114,14 @@ class _UserListScreenState extends State<UserListScreen> {
             onPressed: () {
               setState(() {
                 isGridView = !isGridView;
-                _currentPage = 0;
               });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            onPressed: () {
-
             },
           ),
         ],
       ),
       body: isLoading == true
-        ? const Center(child: CircularProgressIndicator(backgroundColor: Colors.grey, color: Colors.blueAccent,))
-        : isGridView ? _buildGridView() : _buildListView(),
+          ? const Center(child: CircularProgressIndicator(backgroundColor: Colors.grey, color: Colors.blueAccent,))
+          : isGridView ? _buildGridView() : _buildListView(),
     );
   }
 
@@ -143,39 +133,51 @@ class _UserListScreenState extends State<UserListScreen> {
     // Add a listener to the scroll controller
     controller.addListener(() {
       if (controller.position.pixels == controller.position.maxScrollExtent) {
-        // User has reached the end of the list
+        print("Reached the end of the list. Loading more...");
         userListViewModel.loadMore();
       }
     });
 
     return RefreshIndicator(
       onRefresh: () async {
-          await userListViewModel.refresh();
+        await userListViewModel.refresh(context);
       },
-      child: Column(
-        children: [
-          GridView.builder(
-            shrinkWrap: true,
-            controller: controller, // Assign the scroll controller
-            physics: const AlwaysScrollableScrollPhysics(),
-            scrollDirection: Axis.vertical,
-            padding: const EdgeInsets.only(top: 8.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
+      child: Container(
+        height: 600.0,
+        child: Column(
+          children: [
+            Expanded(
+              child: GridView.builder(
+                controller: controller,
+                physics: const AlwaysScrollableScrollPhysics(),
+                scrollDirection: Axis.vertical,
+                padding: const EdgeInsets.only(top: 8.0),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8.0,
+                  mainAxisSpacing: 8.0,
+                ),
+                itemCount: userListViewModel.userDataList.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return UserCard(
+                    imageUrl: userListViewModel.userDataList[index].avatar,
+                    email: userListViewModel.userDataList[index].email,
+                    name: '${userListViewModel.userDataList[index].firstName} ${userListViewModel.userDataList[index].lastName}',
+                    isListView: false,
+                  );
+                },
+              ),
             ),
-            itemCount: userListViewModel.userPages[_currentPage].data.length,
-            itemBuilder: (BuildContext context, int index) {
-              return UserCard(
-                imageUrl: userListViewModel.userPages[_currentPage].data[index].avatar,
-                email: userListViewModel.userPages[_currentPage].data[index].email,
-                name: '${userListViewModel.userPages[_currentPage].data[index].firstName} ${userListViewModel.userPages[_currentPage].data[index].lastName}',
-                isListView: false,
-              );
-            },
-          ),
-        ],
+            userListViewModel.isLoadingMore// Display loading indicator when loading more
+            ? Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+            : Container()
+          ],
+        ),
       ),
     );
   }
@@ -183,47 +185,53 @@ class _UserListScreenState extends State<UserListScreen> {
 
   Widget _buildListView() {
     final userListViewModel = Provider.of<UserListViewModel>(context);
+
+    final controller = ScrollController();
+
+    // Add a listener to the scroll controller
+    controller.addListener(() {
+      if (controller.position.pixels == controller.position.maxScrollExtent) {
+        print("Reached the end of the list. Loading more...");
+        userListViewModel.loadMore();
+      }
+    });
+
     return RefreshIndicator(
       onRefresh: () async {
-        refresh();
+        await userListViewModel.refresh(context);
       },
-      child: SingleChildScrollView(
+      child: Container(
+        height: 600.0,
         child: Column(
           children: [
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 8.0),
-              itemCount: userListViewModel.userPages[_currentPage].data.length,
-              itemBuilder: (BuildContext context, int index) {
-                return UserCard(
-                  imageUrl: userListViewModel.userPages[_currentPage].data[index].avatar,
-                  email: userListViewModel.userPages[_currentPage].data[index].email,
-                  name: '${userListViewModel.userPages[_currentPage].data[index].firstName} ${userListViewModel.userPages[_currentPage].data[index].lastName}',
-                  isListView: true,
-                );
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 100.0),
-              child: NumberPaginator(
-                controller: controllerListView,
-                numberPages: userListViewModel.userPages.length,
-                onPageChange: (int index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                physics: const AlwaysScrollableScrollPhysics(),
+                scrollDirection: Axis.vertical,
+                padding: const EdgeInsets.only(top: 8.0),
+                itemCount: userListViewModel.userDataList.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return UserCard(
+                    imageUrl: userListViewModel.userDataList[index].avatar,
+                    email: userListViewModel.userDataList[index].email,
+                    name: '${userListViewModel.userDataList[index].firstName} ${userListViewModel.userDataList[index].lastName}',
+                    isListView: false,
+                  );
                 },
               ),
+            ),
+            userListViewModel.isLoadingMore// Display loading indicator when loading more
+            ? Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
             )
+            : Container()
           ],
         ),
       ),
     );
-  }
-
-  void loadMore() async {
-    final userListViewModel = Provider.of<UserListViewModel>(context, listen: false);
-    await userListViewModel.loadMore();
   }
 }

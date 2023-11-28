@@ -17,22 +17,22 @@ class UserCard extends StatelessWidget {
         children: [
           Container(
             height: isListView ? 200 : 120, // Adjust the height as needed
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(12.0))
             ),
             child: CachedNetworkImage(
               imageUrl: imageUrl,
-              placeholder: (context, url) => SizedBox(
+              placeholder: (context, url) => const SizedBox(
                 width: 60,
                 height: 60,
                 child: Center(child: CircularProgressIndicator())
               ), // You can customize the placeholder
-              errorWidget: (context, url, error) => Icon(Icons.error),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
               height: 120,
               fit: BoxFit.cover,
             ),
           ),
-         SizedBox(height: 16.0,),
+         const SizedBox(height: 16.0,),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
             child: Text(
