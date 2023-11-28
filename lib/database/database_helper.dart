@@ -176,28 +176,25 @@ class DatabaseHelper {
     // }
     for (int i = 0; i < result.length; i++) {
       List<UserDataModel> userData = [];
-      print('result.length = ${result.length}');
       for(int j = 1; j <= 6; j++){
         List<Map<String, Object?>>? data = await db.query(
           'user_data',
           where: 'id = ?',
           whereArgs: [(i) * 6 + j],
         );
-        print(UserDataModel.fromJson(data.first));
         userData.add(UserDataModel.fromJson(data.first));
-
       }
 
       UserPageModel userPage = UserPageModel(
-          page: (result[i]['page'] as int?) ?? 0,
-          perPage: (result[i]['page'] as int?) ?? 0,
-          total: (result[i]['page'] as int?) ?? 0,
-          totalPages: (result[i]['page'] as int?) ?? 0,
-          data: userData,
-          support: UserSupportModel(
-            url: "https://reqres.in/#support-heading",
-            text: "To keep ReqRes free, contributions towards server costs are appreciated!",
-          )
+        page: (result[i]['page'] as int?) ?? 0,
+        perPage: (result[i]['page'] as int?) ?? 0,
+        total: (result[i]['page'] as int?) ?? 0,
+        totalPages: (result[i]['page'] as int?) ?? 0,
+        data: userData,
+        support: UserSupportModel(
+          url: "https://reqres.in/#support-heading",
+          text: "To keep ReqRes free, contributions towards server costs are appreciated!",
+        )
       );
 
       userPages.add(userPage);
